@@ -22,10 +22,10 @@ export const SeatGrid = ({ seats, seatStatuses, selectedSeats, onSeatSelect }: S
     const maxY = Math.max(...seats.map(s => s.gridY)) + 1;
     const seatMap = new Map<string, Seat>();
     seats.forEach(s => seatMap.set(`${s.gridX}-${s.gridY}`, s));
-    
+
     const rows = Array.from({ length: maxY }, (_, y) => y + 1);
     const cols = Array.from({ length: maxX }, (_, x) => x + 1);
-    
+
     return { rows, cols, seatMap, maxX };
   }, [seats]);
 
@@ -33,7 +33,7 @@ export const SeatGrid = ({ seats, seatStatuses, selectedSeats, onSeatSelect }: S
     if (isSelected) {
       return "bg-neon-green border-neon-green text-background neon-glow-green scale-110";
     }
-    
+
     switch (status) {
       case "booked":
         return "bg-seat-booked border-seat-booked text-muted-foreground/50 cursor-not-allowed";
@@ -83,62 +83,64 @@ export const SeatGrid = ({ seats, seatStatuses, selectedSeats, onSeatSelect }: S
       </div>
 
       {/* Seat Grid */}
-      <div className="flex flex-col gap-2 px-2">
-        {gridData.rows.map((y) => {
-          const rowSeats = seats.filter(s => s.gridY === y);
-          if (rowSeats.length === 0) return null;
-          const rowLabel = rowSeats[0]?.row;
-          
-          return (
-            <div key={y} className="flex items-center gap-1.5">
-              {/* Row Label */}
-              <span className="w-6 text-xs text-muted-foreground font-bold text-center">
-                {rowLabel}
-              </span>
-              
-              {/* Seats */}
-              <div className="flex gap-1.5">
-                {gridData.cols.map((x) => {
-                  const seat = gridData.seatMap.get(`${x}-${y}`);
-                  
-                  if (!seat) {
-                    // Check if this is the aisle gap
-                    const midPoint = gridData.maxX / 2 + 1;
-                    if (x === midPoint || x === midPoint + 1) {
-                      return <div key={`gap-${x}`} className="w-3" />;
-                    }
-                    return <div key={`empty-${x}`} className="w-8 h-8" />;
-                  }
+      <div className="flex flex-col gap-2 px-4 w-full overflow-x-auto">
+        <div className="flex flex-col items-center min-w-fit mx-auto">
+          {gridData.rows.map((y) => {
+            const rowSeats = seats.filter(s => s.gridY === y);
+            if (rowSeats.length === 0) return null;
+            const rowLabel = rowSeats[0]?.row;
 
-                  const status = statusMap.get(seat.id) || "available";
-                  const isSelected = selectedSeats.includes(seat.id);
-                  const SeatIcon = getSeatIcon(seat.type);
-                  
-                  return (
-                    <button
-                      key={seat.id}
-                      onClick={() => handleSeatClick(seat)}
-                      disabled={status !== "available"}
-                      className={cn(
-                        "w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all duration-200",
-                        seat.type === "Twin" && "w-16",
-                        getSeatStyle(seat, status, isSelected)
-                      )}
-                      title={`${seat.row}${seat.number} - ${seat.type} ${status !== "available" ? `(${status})` : ""}`}
-                    >
-                      <SeatIcon className={cn("w-4 h-4", seat.type === "Twin" && "w-5 h-5")} />
-                    </button>
-                  );
-                })}
+            return (
+              <div key={y} className="flex items-center gap-1.5">
+                {/* Row Label */}
+                <span className="w-6 text-xs text-muted-foreground font-bold text-center">
+                  {rowLabel}
+                </span>
+
+                {/* Seats */}
+                <div className="flex gap-1.5">
+                  {gridData.cols.map((x) => {
+                    const seat = gridData.seatMap.get(`${x}-${y}`);
+
+                    if (!seat) {
+                      // Check if this is the aisle gap
+                      const midPoint = gridData.maxX / 2 + 1;
+                      if (x === midPoint || x === midPoint + 1) {
+                        return <div key={`gap-${x}`} className="w-3" />;
+                      }
+                      return <div key={`empty-${x}`} className="w-8 h-8" />;
+                    }
+
+                    const status = statusMap.get(seat.id) || "available";
+                    const isSelected = selectedSeats.includes(seat.id);
+                    const SeatIcon = getSeatIcon(seat.type);
+
+                    return (
+                      <button
+                        key={seat.id}
+                        onClick={() => handleSeatClick(seat)}
+                        disabled={status !== "available"}
+                        className={cn(
+                          "w-8 h-8 rounded-lg border-2 flex items-center justify-center transition-all duration-200",
+                          seat.type === "Twin" && "w-16",
+                          getSeatStyle(seat, status, isSelected)
+                        )}
+                        title={`${seat.row}${seat.number} - ${seat.type} ${status !== "available" ? `(${status})` : ""}`}
+                      >
+                        <SeatIcon className={cn("w-4 h-4", seat.type === "Twin" && "w-5 h-5")} />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Row Label (right side) */}
+                <span className="w-6 text-xs text-muted-foreground font-bold text-center">
+                  {rowLabel}
+                </span>
               </div>
-              
-              {/* Row Label (right side) */}
-              <span className="w-6 text-xs text-muted-foreground font-bold text-center">
-                {rowLabel}
-              </span>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       {/* Legend */}

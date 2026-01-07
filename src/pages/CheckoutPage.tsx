@@ -1,28 +1,31 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Clock, CreditCard, Wallet, Check, AlertCircle, Shield, Sparkles, Ticket } from "lucide-react";
+import { Clock, CreditCard, Wallet, Check, AlertCircle, Shield, Sparkles, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useBooking } from "@/context/BookingContext";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { PageLayout, PageHeader } from "@/components/layout";
+import { SectionCard } from "@/components/ui/section-card";
+import { StickyFooter } from "@/components/ui/sticky-footer";
 
 const LOCK_DURATION = 5 * 60; // 5 minutes in seconds
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
-  const { 
-    movie, 
-    showtime, 
-    selectedSeats, 
+  const {
+    movie,
+    showtime,
+    selectedSeats,
     seatDetails,
-    concessions, 
-    ticketTotal, 
-    concessionTotal, 
+    concessions,
+    ticketTotal,
+    concessionTotal,
     calculateTotal,
-    clearBooking 
+    clearBooking,
   } = useBooking();
-  
+
   const [timeLeft, setTimeLeft] = useState(LOCK_DURATION);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -35,7 +38,7 @@ const CheckoutPage = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
+      setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
           toast.error("Session expired! Your seats have been released.");
@@ -53,7 +56,7 @@ const CheckoutPage = () => {
   const formatTime = useCallback((seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, []);
 
   const handlePayment = async () => {
@@ -63,57 +66,40 @@ const CheckoutPage = () => {
     }
 
     setIsProcessing(true);
-    
+
     // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     toast.success("Payment successful! Enjoy your movie!");
     clearBooking();
     navigate("/tickets");
   };
 
-  const seatLabels = seatDetails.map(s => `${s.row}${s.number}`).join(", ");
+  const seatLabels = seatDetails.map((s) => `${s.row}${s.number}`).join(", ");
 
   if (!movie || !showtime) return null;
 
   const isLowTime = timeLeft < 60;
 
-  return (
-    <div className="min-h-screen bg-background pb-36">
-      {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
-      </div>
+  // Timer badge for header
+  const timerBadge = (
+    <div
+      className={cn(
+        "flex items-center gap-2 px-4 py-2 rounded-full transition-all",
+        isLowTime
+          ? "bg-destructive/20 text-destructive animate-pulse neon-glow-purple"
+          : "bg-primary/10 text-primary border border-primary/30"
+      )}
+    >
+      <Clock className="w-4 h-4" />
+      <span className="font-mono font-bold text-lg">{formatTime(timeLeft)}</span>
+    </div>
+  );
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 glass-dark border-b border-border/30">
-        <div className="px-4 py-3">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate(-1)}
-              className="p-2 -ml-2 rounded-xl hover:bg-secondary/50 transition-colors active:scale-95"
-            >
-              <ArrowLeft className="w-5 h-5 text-foreground" />
-            </button>
-            <div className="flex-1">
-              <h1 className="font-display text-xl font-bold text-foreground">
-                Checkout
-              </h1>
-            </div>
-            {/* Timer */}
-            <div className={cn(
-              "flex items-center gap-2 px-4 py-2 rounded-full transition-all",
-              isLowTime 
-                ? "bg-destructive/20 text-destructive animate-pulse neon-glow-purple" 
-                : "bg-primary/10 text-primary border border-primary/30"
-            )}>
-              <Clock className="w-4 h-4" />
-              <span className="font-mono font-bold text-lg">{formatTime(timeLeft)}</span>
-            </div>
-          </div>
-        </div>
-      </header>
+  return (
+    <PageLayout showHeader={false} backgroundVariant="mixed" bottomPadding="small">
+      {/* Custom Header with timer */}
+      <PageHeader title="Checkout" showBackButton rightContent={timerBadge} />
 
       <div className="p-4 space-y-4">
         {/* Ticket Summary Card */}
@@ -122,9 +108,13 @@ const CheckoutPage = () => {
           <div className="bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 p-4 border-b border-dashed border-border/50">
             <div className="flex items-center gap-2 text-primary mb-2">
               <Ticket className="w-5 h-5" />
-              <span className="text-sm font-semibold uppercase tracking-wider">E-Ticket</span>
+              <span className="text-sm font-semibold uppercase tracking-wider">
+                E-Ticket
+              </span>
             </div>
-            <h3 className="font-display text-lg font-bold text-foreground">{movie.title}</h3>
+            <h3 className="font-display text-lg font-bold text-foreground">
+              {movie.title}
+            </h3>
           </div>
 
           {/* Ticket Body */}
@@ -138,7 +128,9 @@ const CheckoutPage = () => {
               <div className="flex-1 space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">Cinema:</span>
-                  <span className="text-foreground font-medium">{showtime.hallName}</span>
+                  <span className="text-foreground font-medium">
+                    {showtime.hallName}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-muted-foreground">Experience:</span>
@@ -169,22 +161,24 @@ const CheckoutPage = () => {
           <div className="absolute right-0 top-[72px] w-4 h-8 bg-background rounded-l-full" />
         </div>
 
-        {/* Order Summary */}
-        <div className="p-4 rounded-2xl bg-card/50 border border-border/50 space-y-3">
+        {/* Order Summary - Using SectionCard */}
+        <SectionCard className="space-y-3">
           <h4 className="font-semibold text-foreground flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
             Order Summary
           </h4>
-          
+
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">
                 {selectedSeats.length}x Movie Ticket{selectedSeats.length > 1 ? "s" : ""}
               </span>
-              <span className="text-foreground font-medium">RM {ticketTotal.toFixed(2)}</span>
+              <span className="text-foreground font-medium">
+                RM {ticketTotal.toFixed(2)}
+              </span>
             </div>
-            
-            {concessions.map(c => (
+
+            {concessions.map((c) => (
               <div key={c.item.id} className="flex justify-between text-sm">
                 <span className="text-muted-foreground">
                   {c.quantity}x {c.item.name}
@@ -202,86 +196,49 @@ const CheckoutPage = () => {
               RM {calculateTotal().toFixed(2)}
             </span>
           </div>
-        </div>
+        </SectionCard>
 
         {/* Payment Methods */}
         <div className="space-y-3">
           <h4 className="font-semibold text-foreground">Select Payment Method</h4>
-          
-          <button
-            onClick={() => setSelectedPayment("card")}
-            className={cn(
-              "w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-300",
-              selectedPayment === "card"
-                ? "bg-primary/10 border-primary neon-border-purple"
-                : "bg-card/30 border-border/50 hover:border-primary/50"
-            )}
-          >
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-              <CreditCard className="w-7 h-7 text-white" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-semibold text-foreground">Credit / Debit Card</p>
-              <p className="text-xs text-muted-foreground">Visa, Mastercard, AMEX</p>
-            </div>
-            {selectedPayment === "card" && (
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                <Check className="w-4 h-4 text-primary-foreground" />
-              </div>
-            )}
-          </button>
 
-          <button
-            onClick={() => setSelectedPayment("tng")}
-            className={cn(
-              "w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-300",
-              selectedPayment === "tng"
-                ? "bg-primary/10 border-primary neon-border-purple"
-                : "bg-card/30 border-border/50 hover:border-primary/50"
-            )}
-          >
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center shadow-lg">
-              <Wallet className="w-7 h-7 text-white" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-semibold text-foreground">Touch 'n Go eWallet</p>
-              <p className="text-xs text-muted-foreground">Pay with TnG balance</p>
-            </div>
-            {selectedPayment === "tng" && (
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                <Check className="w-4 h-4 text-primary-foreground" />
-              </div>
-            )}
-          </button>
+          <PaymentOption
+            id="card"
+            label="Credit / Debit Card"
+            description="Visa, Mastercard, AMEX"
+            icon={CreditCard}
+            gradient="from-blue-500 via-purple-500 to-pink-500"
+            selected={selectedPayment === "card"}
+            onSelect={() => setSelectedPayment("card")}
+          />
 
-          <button
-            onClick={() => setSelectedPayment("grab")}
-            className={cn(
-              "w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-300",
-              selectedPayment === "grab"
-                ? "bg-primary/10 border-primary neon-border-purple"
-                : "bg-card/30 border-border/50 hover:border-primary/50"
-            )}
-          >
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-              <Wallet className="w-7 h-7 text-white" />
-            </div>
-            <div className="flex-1 text-left">
-              <p className="font-semibold text-foreground">GrabPay</p>
-              <p className="text-xs text-muted-foreground">Pay with GrabPay wallet</p>
-            </div>
-            {selectedPayment === "grab" && (
-              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
-                <Check className="w-4 h-4 text-primary-foreground" />
-              </div>
-            )}
-          </button>
+          <PaymentOption
+            id="tng"
+            label="Touch 'n Go eWallet"
+            description="Pay with TnG balance"
+            icon={Wallet}
+            gradient="from-blue-600 to-blue-400"
+            selected={selectedPayment === "tng"}
+            onSelect={() => setSelectedPayment("tng")}
+          />
+
+          <PaymentOption
+            id="grab"
+            label="GrabPay"
+            description="Pay with GrabPay wallet"
+            icon={Wallet}
+            gradient="from-green-500 to-green-600"
+            selected={selectedPayment === "grab"}
+            onSelect={() => setSelectedPayment("grab")}
+          />
         </div>
 
         {/* Security Badge */}
         <div className="flex items-center justify-center gap-2 py-2">
           <Shield className="w-4 h-4 text-muted-foreground" />
-          <p className="text-xs text-muted-foreground">Secured by 256-bit SSL encryption</p>
+          <p className="text-xs text-muted-foreground">
+            Secured by 256-bit SSL encryption
+          </p>
         </div>
 
         {/* Warning */}
@@ -290,14 +247,15 @@ const CheckoutPage = () => {
           <div>
             <p className="text-sm font-medium text-destructive">Seats Locked</p>
             <p className="text-xs text-destructive/80 mt-0.5">
-              Complete payment within {formatTime(timeLeft)} or your booking will be cancelled and seats released.
+              Complete payment within {formatTime(timeLeft)} or your booking will be
+              cancelled and seats released.
             </p>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 glass-dark border-t border-border/30 p-4 pb-8">
+      <StickyFooter>
         <Button
           variant="cinema"
           size="xl"
@@ -317,9 +275,57 @@ const CheckoutPage = () => {
             </span>
           )}
         </Button>
-      </div>
-    </div>
+      </StickyFooter>
+    </PageLayout>
   );
 };
+
+// Extracted PaymentOption component - DRY approach for payment methods
+interface PaymentOptionProps {
+  id: string;
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  gradient: string;
+  selected: boolean;
+  onSelect: () => void;
+}
+
+const PaymentOption = ({
+  label,
+  description,
+  icon: Icon,
+  gradient,
+  selected,
+  onSelect,
+}: PaymentOptionProps) => (
+  <button
+    onClick={onSelect}
+    className={cn(
+      "w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all duration-300",
+      selected
+        ? "bg-primary/10 border-primary neon-border-purple"
+        : "bg-card/30 border-border/50 hover:border-primary/50"
+    )}
+  >
+    <div
+      className={cn(
+        "w-14 h-14 rounded-xl bg-gradient-to-br flex items-center justify-center shadow-lg",
+        gradient
+      )}
+    >
+      <Icon className="w-7 h-7 text-white" />
+    </div>
+    <div className="flex-1 text-left">
+      <p className="font-semibold text-foreground">{label}</p>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </div>
+    {selected && (
+      <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
+        <Check className="w-4 h-4 text-primary-foreground" />
+      </div>
+    )}
+  </button>
+);
 
 export default CheckoutPage;
